@@ -14,13 +14,13 @@
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-  
-  .player-container {
-    position: relative;
-    width: 450px;
-  }
+}
 
+  
+.player-container {
+  position: relative;
+  width: 450px;
+}
   /* In fullscreen, the bottom-bar should also stretch full width */
   .player-container:fullscreen {
     width: 100vw;
@@ -67,21 +67,22 @@
   width: 100%;
 }
   
+
 .video-area {
-    flex: 1;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 /* Outside fullscreen, scale by width */
 .video-area video {
-    max-width:99.9%;
-    height:auto;
-    object-fit: contain; 
-    display: block;
-  }
+  max-width:99.9%;
+  height:auto;
+  object-fit: contain; 
+  display: block;
+}
   
   #loadingIndicator {
     position: absolute;
@@ -112,6 +113,16 @@
     width: 100%;
   }
   
+  .player-container:fullscreen .video-area video,
+.player-container:-webkit-full-screen .video-area video,
+.player-container:-moz-full-screen .video-area video,
+.player-container:-ms-fullscreen .video-area video {
+  height: 100%;
+  width: auto;
+  max-height:100%;
+  max-width:100%;
+  object-fit: contain;
+}
 
   .bar-left,
   .bar-right,
@@ -154,10 +165,11 @@
   /* Controls bar sits above the backgrounds */
   .controls-bar {
     position: absolute;
+    width:100%;
     top:0; left:0; right:0; bottom:0;
     display: flex;
     align-items: center;
-    background: none;
+    box-sizing: border-box;
     z-index:9999;
     padding:0 4px;
   }
@@ -175,7 +187,7 @@
   .right-controls {
     display: flex;
     align-items: center;
-    margin-left: auto;
+    margin-left: auto; /* pushes this group to the far right */
   }
   .control-button {
     display: inline-block;
@@ -245,59 +257,73 @@
   
   /* Timeline */
   .progress-section {
-    position: relative;   /* Maintain relative positioning for absolute children */
-    height: 8px;          /* Ensure a vertical space for the timeline bar */
-    flex: 1;              /* Allow expansion to fill available space in fullscreen */
-    margin: 0 12px;       /* Spacing as desired */
-    background: none;     /* Transparent background is fine */
-    min-width: 160px;     /* Prevent collapsing too small; ensures it's visible */
-    display: omit;       /* block or omit display - flex items default to block */
-    z-index: 1000;        /* Ensure it's above other elements if needed */
-  }
-  
-  
-  .progress-background {
-    min-width: 160px;
+    position: relative;
     height: 8px;
-    background: url('assets/timeline/timeline.png') repeat-x left center;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  
-  .progress-loaded {
-    position: absolute;
-    top: 0;
-    height: 8px;
-    width: 0%;
-    background: url('assets/timeline/played_bar_connected.png') repeat-x left center;
-    opacity: 0.6;
-    z-index: 1;
-  }
-  
-  .progress-red {
-    position: absolute;
-    top: 0;
-    height: 8px;
-    width: 0%;
-    background: url('assets/timeline/played_bar_connected.png') repeat-x left center;
-    z-index: 2;
-  }
-  
-  .progress-handle {
-    position: absolute;
-    width: 21px; 
-    height: 21px;
-    background: url('assets/timeline/cursor/timeline_cursor.png') no-repeat center center;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
+    background: none;
+    flex: 1;
+    min-width: 0;
+    margin: 0 12px;
     z-index: 9999;
-  }
-  .progress-handle.active {
-    background: url('assets/timeline/cursor/timeline_cursor_red.png') no-repeat center center !important;
+    display: block;
   }
   
+  
+.progress-background {
+  width:auto;
+  height: 8px;
+  background: url('assets/timeline/timeline.png') repeat-x left center;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.progress-loaded {
+  left: 0; /* Will be set in JS as a % */
+  background: url('assets/timeline/played_bar_connected.png') repeat-x left center;
+  opacity: 0.6;
+  z-index: 1;
+}
+
+  
+.progress-red {
+  position: absolute;
+  top: 0;
+  left: 0; /* Dynamically set by JS */
+  height: 8px;
+  background: url('assets/timeline/played_bar_connected.png') repeat-x left center;
+  z-index: 2;
+}
+  
+/* Handle stays absolutely positioned as well */
+.progress-handle {
+  position: absolute;
+  top: 50%;  /* center vertically */
+  transform: translateY(-50%);
+  width: 21px;
+  height: 21px;
+  background: url('assets/timeline/cursor/timeline_cursor.png') no-repeat center center;
+  cursor: pointer;
+  z-index: 9999;
+}
+.progress-handle.active {
+  background: url('assets/timeline/cursor/timeline_cursor_red.png') no-repeat center center !important;
+}
+
+.progress-loaded,
+.progress-red {
+  position: absolute;
+  top: 0;
+  height: 8px;
+}
+  .player-container:fullscreen .progress-section,
+  .player-container:-webkit-full-screen .progress-section,
+  .player-container:-moz-full-screen .progress-section,
+  .player-container:-ms-fullscreen .progress-section {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+
   /* Time Section */
   .time-section {
     display: inline-block;

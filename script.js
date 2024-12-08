@@ -108,21 +108,54 @@ function rewindVideo() {
 function updateProgress() {
   if (!videoDuration) return;
   const currentTime = myVideo.currentTime;
-  const timelineWidth = progressSection.clientWidth;
-
   const watchedDuration = Math.max(0, currentTime - earliestWatchedTime);
-  const earliestPixel = (earliestWatchedTime / videoDuration) * timelineWidth;
-  const watchedWidth = (watchedDuration / videoDuration) * timelineWidth;
-  progressRed.style.left = earliestPixel + 'px';
-  progressRed.style.width = watchedWidth + 'px';
+  
+  // Fractions of total video length
+  const earliestFraction = (earliestWatchedTime / videoDuration) * 100;
+  const watchedFraction = (watchedDuration / videoDuration) * 100;
 
-  const handlePercent = (currentTime / videoDuration) * 100;
-  const handleX = (handlePercent / 100) * timelineWidth;
-  progressHandle.style.left = (handleX - (progressHandle.offsetWidth / 2)) + 'px';
+  progressRed.style.left = earliestFraction + '%';
+  progressRed.style.width = watchedFraction + '%';
+
+  // Handle position also by fraction
+  const handleFraction = (currentTime / videoDuration) * 100;
+  const handleXPercent = handleFraction; // directly use %
+  progressHandle.style.left = `calc(${handleXPercent}% - ${progressHandle.offsetWidth/2}px)`;
 
   updateTimeDisplay(currentTime, videoDuration);
 }
 
+function updateBuffered() {
+  if (!myVideo.buffered || myVideo.buffered.length === 0 || !videoDuration) return;
+
+  const bufferEnd = myVideo.buffered.end(myVideo.buffered.length - 1);
+  const loadedDuration = Math.max(0, bufferEnd - earliestWatchedTime);
+
+  // Compute fractions (0 to 100%)
+  let earliestFraction = (earliestWatchedTime / videoDuration) * 100;
+  let loadedFraction = (loadedDuration / videoDuration) * 100;
+
+  // Clamp between 0 and 100
+  earliestFraction = Math.min(Math.max(earliestFraction, 0), 100);
+  loadedFraction = Math.min(Math.max(loadedFraction, 0), 100);
+
+  // Ensure total doesn't exceed 100%
+  // Since earliestFraction + loadedFraction represents the segment from earliestWatchedTime
+  // to bufferEnd, it shouldn't exceed the total timeline.
+  // In practice, loadedFraction is the width from earliestFraction forward.
+  // If for some reason rounding pushes it beyond the end, clamp it:
+  const maxLoadedFraction = 100 - earliestFraction;
+  if (loadedFraction > maxLoadedFraction) {
+    loadedFraction = maxLoadedFraction;
+  }
+
+  // Round to 4 decimal places to avoid sub-pixel issues:
+  earliestFraction = parseFloat(earliestFraction.toFixed(4));
+  loadedFraction = parseFloat(loadedFraction.toFixed(4));
+
+  progressLoaded.style.left = earliestFraction + '%';
+  progressLoaded.style.width = loadedFraction + '%';
+}
 function updateTimeDisplay(currentTime, duration) {
   timeCurrent.textContent = formatTime(currentTime);
   timeTotal.textContent = duration ? formatTime(duration) : '0:00';
@@ -286,14 +319,18 @@ volumeHandle.addEventListener('mousedown', startVolumeDrag);
 
 /* Fullscreen Toggle */
 function toggleFullscreen() {
-    const container = document.querySelector('.player-container');
-    if (!document.fullscreenElement) {
-      container.requestFullscreen(); // Request fullscreen on the container
-    } else {
-      document.exitFullscreen();
-    }
+  const container = document.querySelector('.player-container');
+  if (!document.fullscreenElement) {
+    container.requestFullscreen().catch(err => {
+      console.error("Error attempting to enter fullscreen:", err);
+    });
+  } else {
+    document.exitFullscreen().catch(err => {
+      console.error("Error attempting to exit fullscreen:", err);
+    });
   }
-  
+}
+
 
 playPauseBtn.addEventListener('click', togglePlayPause);
 rewindBtn.addEventListener('click', rewindVideo);
@@ -307,78 +344,152 @@ const frameDelay = 40; // ms between frames
 
 
 function updateFullscreenFrame() {
-    if (fullscreenFrame < totalFrames) {
-      fullscreenFrame++;
-      fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/${fullscreenFrame}.png')`;
-    } else {
-      fullscreenFrame = 1;
-      fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
-    }
-}  
-    function startFullscreenAnimation() {
-        if (!fullscreenInterval) {
-          fullscreenFrame = 1;
-          fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
-          fullscreenBtn.style.opacity = 1; // Ensure fully visible
-          fullscreenInterval = setInterval(updateFullscreenFrame, frameDelay);
-        }
-      }
-  
-      function stopFullscreenAnimation() {
-        if (fullscreenInterval) {
-          clearInterval(fullscreenInterval);
-          fullscreenInterval = null;
-          fullscreenFrame = 1;
-          fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
-        }
-      }
-  
-  
-      function attachFullscreenHoverEvents() {
-        fullscreenBtn.addEventListener('mouseenter', startFullscreenAnimation);
-        fullscreenBtn.addEventListener('mouseleave', stopFullscreenAnimation);
-      }
-      
-      function detachFullscreenHoverEvents() {
-        fullscreenBtn.removeEventListener('mouseenter', startFullscreenAnimation);
-        fullscreenBtn.removeEventListener('mouseleave', stopFullscreenAnimation);
-      }
+  if (fullscreenFrame < totalFrames) {
+    fullscreenFrame++;
+    fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/${fullscreenFrame}.png')`;
+  } else {
+    fullscreenFrame = 1;
+    fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+  }
+}
 
-      // Initially attach hover events (for normal mode)
-    attachFullscreenHoverEvents();
+function startFullscreenAnimation() {
+  if (!fullscreenInterval) {
+    fullscreenFrame = 1;
+    fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+    fullscreenBtn.style.opacity = 1; // Ensure fully visible
+    fullscreenInterval = setInterval(updateFullscreenFrame, frameDelay);
+  }
+}
+
+function stopFullscreenAnimation() {
+  if (fullscreenInterval) {
+    clearInterval(fullscreenInterval);
+    fullscreenInterval = null;
+    fullscreenFrame = 1;
+    fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+  }
+}
+
+function attachFullscreenHoverEvents() {
+  fullscreenBtn.addEventListener('mouseenter', startFullscreenAnimation);
+  fullscreenBtn.addEventListener('mouseleave', stopFullscreenAnimation);
+}
+
+function detachFullscreenHoverEvents() {
+  fullscreenBtn.removeEventListener('mouseenter', startFullscreenAnimation);
+  fullscreenBtn.removeEventListener('mouseleave', stopFullscreenAnimation);
+}
+
+// Initially attach hover events (for normal mode)
+attachFullscreenHoverEvents();
     
     // Toggle fullscreen function
-function toggleFullscreen() {
-    const container = document.querySelector('.player-container');
-    if (!document.fullscreenElement) {
-      // Enter fullscreen
-      container.requestFullscreen().then(() => {
-        // After entering fullscreen mode
-        // Set fullscreen button to exit icon (no animation)
-        stopFullscreenAnimation(); // Ensure no animation running
-        detachFullscreenHoverEvents(); // Remove hover events since we want a static exit icon
+    // Existing code above remains unchanged...
+
+        // Handle fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+          if (document.fullscreenElement) {
+            // Entered fullscreen
+            stopFullscreenAnimation();
+            detachFullscreenHoverEvents();
+            fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/exit_fullscreen.png')`;
+            fullscreenBtn.style.backgroundSize = '45px 15px';
+            fullscreenBtn.classList.add('exit-icon');
+          } else {
+            // Exited fullscreen
+            fullscreenBtn.classList.remove('exit-icon');
+            fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+            fullscreenBtn.style.backgroundSize = '25px 18px';
+            attachFullscreenHoverEvents();
+          }
+        
+          // No artificial waiting needed. The ResizeObserver will call updateProgress()/updateBuffered()
+          // as soon as the layout actually changes the progressSection size.
+        });
+
+
+// Pressing Escape should exit fullscreen as if pressing the exit fullscreen button
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.fullscreenElement) {
+    document.exitFullscreen().catch(err => console.error("Error attempting to exit fullscreen:", err));
+  }
+});
+
+// Use a ResizeObserver to update timeline immediately whenever its width changes
+const observer = new ResizeObserver(() => {
+  // Called whenever progressSection size changes
+  updateProgress();
+  updateBuffered();
+});
+
+observer.observe(progressSection);
+
+    function handleFullscreenChange() {
+      if (document.fullscreenElement) {
+        // Entered fullscreen
+        stopFullscreenAnimation();
+        detachFullscreenHoverEvents();
         fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/exit_fullscreen.png')`;
-        fullscreenBtn.style.backgroundSize = '45px 15px'; // match your icon size
+        fullscreenBtn.style.backgroundSize = '45px 15px';
         fullscreenBtn.classList.add('exit-icon');
-      }).catch(err => {
-        console.error("Error attempting to enter fullscreen:", err);
-      });
-    } else {
-      // Exit fullscreen
-      document.exitFullscreen().then(() => {
-        // After exiting fullscreen
-        // Restore animated icon and hover events
+      } else {
+        // Exited fullscreen
         fullscreenBtn.classList.remove('exit-icon');
-// Restore animated icon, etc.
         fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
         fullscreenBtn.style.backgroundSize = '25px 18px';
-        
-        attachFullscreenHoverEvents(); // Re-attach hover events so animation works again
-      }).catch(err => {
-        console.error("Error attempting to exit fullscreen:", err);
+        attachFullscreenHoverEvents();
+      }
+    
+      // Now we wait for layout to stabilize before updating
+      waitForStableLayout().then(() => {
+        // Once stable, recalculate progress & buffered
+        updateProgress();
+        updateBuffered();
       });
     }
-  }
-  
-  // Add event to fullscreen button to toggle fullscreen on click
-  fullscreenBtn.addEventListener('click', toggleFullscreen);
+    
+    
+
+function waitForStableLayout() {
+  return new Promise((resolve) => {
+    let lastWidth = null;
+    let stableFrames = 0;
+
+    function checkStability() {
+      const currentWidth = progressSection.offsetWidth;
+      if (lastWidth === currentWidth) {
+        // Width hasn't changed since last frame
+        stableFrames++;
+      } else {
+        // Width changed, reset counter
+        stableFrames = 0;
+      }
+
+      lastWidth = currentWidth;
+
+      // Consider stable if unchanged for at least 2 consecutive frames
+      if (stableFrames >= 5) {
+        resolve();
+      } else {
+        requestAnimationFrame(checkStability);
+      }
+    }
+
+    // Start checking
+    requestAnimationFrame(checkStability);
+  });
+}
+    
+    // Pressing Escape should exit fullscreen as if pressing the exit fullscreen button
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.error("Error attempting to exit fullscreen:", err));
+      }
+    });
+    
+    // Event listeners remain as before
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    rewindBtn.addEventListener('click', rewindVideo);
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    
