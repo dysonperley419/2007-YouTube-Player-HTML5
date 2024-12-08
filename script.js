@@ -211,19 +211,19 @@ progressSection.addEventListener('click', (e) => {
 function updateVolumeIcon(volPercent) {
   let iconFile;
   if (volPercent === 0) {
-    iconFile = 'volume_icon.png';
+    iconFile = './assets/volume/volume_icon.png';
     volumeBtn.classList.add('muted');
   } else if (volPercent <= 25) {
-    iconFile = 'volume_icon_1.png';
+    iconFile = './assets/volume/volume_icon_1.png';
     volumeBtn.classList.remove('muted');
   } else if (volPercent <= 50) {
-    iconFile = 'volume_icon_2.png';
+    iconFile = './assets/volume/volume_icon_2.png';
     volumeBtn.classList.remove('muted');
   } else if (volPercent <= 75) {
-    iconFile = 'volume_icon_3.png';
+    iconFile = './assets/volume/volume_icon_3.png';
     volumeBtn.classList.remove('muted');
   } else {
-    iconFile = 'volume_icon_4.png';
+    iconFile = './assets/volume/volume_icon_4.png';
     volumeBtn.classList.remove('muted');
   }
 
@@ -286,13 +286,14 @@ volumeHandle.addEventListener('mousedown', startVolumeDrag);
 
 /* Fullscreen Toggle */
 function toggleFullscreen() {
-  const container = document.querySelector('.player-container');
-  if (!document.fullscreenElement) {
-    container.requestFullscreen();
-  } else {
-    document.exitFullscreen();
+    const container = document.querySelector('.player-container');
+    if (!document.fullscreenElement) {
+      container.requestFullscreen(); // Request fullscreen on the container
+    } else {
+      document.exitFullscreen();
+    }
   }
-}
+  
 
 playPauseBtn.addEventListener('click', togglePlayPause);
 rewindBtn.addEventListener('click', rewindVideo);
@@ -308,35 +309,76 @@ const frameDelay = 40; // ms between frames
 function updateFullscreenFrame() {
     if (fullscreenFrame < totalFrames) {
       fullscreenFrame++;
-      fullscreenBtn.style.backgroundImage = `url('fullscreen_button/${fullscreenFrame}.png')`;
+      fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/${fullscreenFrame}.png')`;
     } else {
-      // On last frame, directly reset to frame 1 without fade or blink
       fullscreenFrame = 1;
-      fullscreenBtn.style.backgroundImage = `url('fullscreen_button/1.png')`;
+      fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
     }
-  }
+}  
+    function startFullscreenAnimation() {
+        if (!fullscreenInterval) {
+          fullscreenFrame = 1;
+          fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+          fullscreenBtn.style.opacity = 1; // Ensure fully visible
+          fullscreenInterval = setInterval(updateFullscreenFrame, frameDelay);
+        }
+      }
+  
+      function stopFullscreenAnimation() {
+        if (fullscreenInterval) {
+          clearInterval(fullscreenInterval);
+          fullscreenInterval = null;
+          fullscreenFrame = 1;
+          fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+        }
+      }
+  
+  
+      function attachFullscreenHoverEvents() {
+        fullscreenBtn.addEventListener('mouseenter', startFullscreenAnimation);
+        fullscreenBtn.addEventListener('mouseleave', stopFullscreenAnimation);
+      }
+      
+      function detachFullscreenHoverEvents() {
+        fullscreenBtn.removeEventListener('mouseenter', startFullscreenAnimation);
+        fullscreenBtn.removeEventListener('mouseleave', stopFullscreenAnimation);
+      }
 
-  function startFullscreenAnimation() {
-    if (!fullscreenInterval) {
-      fullscreenFrame = 1;
-      fullscreenBtn.style.backgroundImage = `url('fullscreen_button/1.png')`;
-      fullscreenBtn.style.opacity = 1; // Ensure fully visible
-      fullscreenInterval = setInterval(updateFullscreenFrame, frameDelay);
+      // Initially attach hover events (for normal mode)
+    attachFullscreenHoverEvents();
+    
+    // Toggle fullscreen function
+function toggleFullscreen() {
+    const container = document.querySelector('.player-container');
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      container.requestFullscreen().then(() => {
+        // After entering fullscreen mode
+        // Set fullscreen button to exit icon (no animation)
+        stopFullscreenAnimation(); // Ensure no animation running
+        detachFullscreenHoverEvents(); // Remove hover events since we want a static exit icon
+        fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/exit_fullscreen.png')`;
+        fullscreenBtn.style.backgroundSize = '45px 15px'; // match your icon size
+        fullscreenBtn.classList.add('exit-icon');
+      }).catch(err => {
+        console.error("Error attempting to enter fullscreen:", err);
+      });
+    } else {
+      // Exit fullscreen
+      document.exitFullscreen().then(() => {
+        // After exiting fullscreen
+        // Restore animated icon and hover events
+        fullscreenBtn.classList.remove('exit-icon');
+// Restore animated icon, etc.
+        fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+        fullscreenBtn.style.backgroundSize = '25px 18px';
+        
+        attachFullscreenHoverEvents(); // Re-attach hover events so animation works again
+      }).catch(err => {
+        console.error("Error attempting to exit fullscreen:", err);
+      });
     }
   }
   
-  function stopFullscreenAnimation() {
-    if (fullscreenInterval) {
-      clearInterval(fullscreenInterval);
-      fullscreenInterval = null;
-      // Reset to frame 1 so it rests at frame 1 when not hovered
-      fullscreenFrame = 1;
-      fullscreenBtn.style.backgroundImage = `url('fullscreen_button/1.png')`;
-    }
-  }
-  
-  
-  fullscreenBtn.addEventListener('mouseenter', startFullscreenAnimation);
-  fullscreenBtn.addEventListener('mouseleave', stopFullscreenAnimation);
-
-  
+  // Add event to fullscreen button to toggle fullscreen on click
+  fullscreenBtn.addEventListener('click', toggleFullscreen);
