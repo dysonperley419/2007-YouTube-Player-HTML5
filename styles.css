@@ -26,6 +26,18 @@
     position: relative;
   }
   
+  #loadingIndicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px; /* match your frame width */
+    height: 30px; /* match your frame height */
+    background: url('loading_frames/1.png') no-repeat center center;
+    background-size: 30px 30px; /* exact frame size */
+    display: none; /* hidden by default */
+}
+
   /* Bottom bar setup */
   .bottom-bar {
     top:-10px;
@@ -309,6 +321,7 @@
     background: url('fullscreen_button/1.png') no-repeat center center;
     background-size: 25px 18px; /* Match frame size exactly to avoid scaling */
     image-rendering: auto; /* Let browser smooth it out */
+    transition:  0.3s ease; /* For fade effect on frame 24 -> 1 */
   }
   
   @media (max-width: 400px) {

@@ -5,6 +5,7 @@ let earliestWatchedTime = 0;
 let previousVolume = 100;
 
 const myVideo = document.getElementById('myVideo');
+const loadingIndicator = document.getElementById('loadingIndicator');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const rewindBtn = document.getElementById('rewindBtn');
 const progressRed = document.getElementById('progressRed');
@@ -42,6 +43,50 @@ myVideo.addEventListener('play', () => {
 myVideo.addEventListener('pause', () => {
   playPauseBtn.classList.remove('playing');
 });
+
+let loadingFrame = 1;
+const loadingTotalFrames = 22;
+let loadingInterval = null;
+const loadingFrameDelay = 100; // ms between loading frames
+
+function updateLoadingFrame() {
+    if (loadingFrame < loadingTotalFrames) {
+      loadingFrame++;
+      loadingIndicator.style.backgroundImage = `url('loading_frames/${loadingFrame}.png')`;
+    } else {
+      // Loop back to frame 1, no fade needed, just continuous loop
+      loadingFrame = 1;
+      loadingIndicator.style.backgroundImage = `url('loading_frames/1.png')`;
+    }
+  }
+  
+  function startLoadingAnimation() {
+    if (!loadingInterval) {
+      loadingFrame = 1;
+      loadingIndicator.style.backgroundImage = `url('loading_frames/1.png')`;
+      loadingIndicator.style.display = 'block'; // show the indicator
+      loadingInterval = setInterval(updateLoadingFrame, loadingFrameDelay);
+    }
+  }
+  
+  function stopLoadingAnimation() {
+    if (loadingInterval) {
+      clearInterval(loadingInterval);
+      loadingInterval = null;
+      loadingIndicator.style.display = 'none'; // hide the indicator
+      // reset to frame 1
+      loadingFrame = 1;
+      loadingIndicator.style.backgroundImage = `url('loading_frames/1.png')`;
+    }
+  }
+
+// Video buffering events
+// 'waiting' event fires when the video is buffering/waiting for data
+myVideo.addEventListener('waiting', startLoadingAnimation);
+// 'playing', 'canplay', 'canplaythrough' events fire when the video can play again
+myVideo.addEventListener('playing', stopLoadingAnimation);
+myVideo.addEventListener('canplay', stopLoadingAnimation);
+myVideo.addEventListener('canplaythrough', stopLoadingAnimation);
 
 function togglePlayPause() {
   if (myVideo.paused || myVideo.ended) {
@@ -271,12 +316,12 @@ function updateFullscreenFrame() {
     }
   }
 
-function startFullscreenAnimation() {
+  function startFullscreenAnimation() {
     if (!fullscreenInterval) {
       fullscreenFrame = 1;
       fullscreenBtn.style.backgroundImage = `url('fullscreen_button/1.png')`;
       fullscreenBtn.style.opacity = 1; // Ensure fully visible
-      fullscreenInterval = setInterval(animateFullscreenFrame, frameDelay);
+      fullscreenInterval = setInterval(updateFullscreenFrame, frameDelay);
     }
   }
   
@@ -290,6 +335,8 @@ function startFullscreenAnimation() {
     }
   }
   
+  
   fullscreenBtn.addEventListener('mouseenter', startFullscreenAnimation);
   fullscreenBtn.addEventListener('mouseleave', stopFullscreenAnimation);
-setInterval(updateFullscreenFrame, frameDelay);
+
+  
