@@ -1,0 +1,318 @@
+@font-face {
+    font-family: 'OriginalYTFont';
+    src: url('fonts/27_Arial_10pt_st.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  body {
+    background: #ffffff;
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .player-container {
+    position: relative;
+    width: 450px; /* Example width, can be responsive */
+  }
+  
+  .video-area {
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Bottom bar setup */
+  .bottom-bar {
+    top:-10px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    height: 31px; /* Height of your bar images */
+    margin: 0; padding: 0;
+  }
+  
+
+  .bar-left,
+  .bar-right,
+  .progress-handle {
+    image-rendering: smooth; /* or smooth if supported */
+  }
+  
+
+  .bar-left {
+    width: 5px; /* exact width of bg_left.png */
+    height: 31px;
+    background: url('bg_left.png') no-repeat left bottom;
+    flex-shrink: 0;
+    margin: 0; padding: 0;
+  }
+  
+  .bar-center {
+    height: 31px;
+    margin: 0; padding: 0;
+    background: url('bg_center.png') repeat-x left bottom;
+    /* Use width: calc(100% - 62px); ensures center fills exactly between edges
+       If parent (.player-container) is positioned, you may need position:relative; 
+       on bottom-bar and adjust widths accordingly.
+    */
+    width: calc(100%);
+  }
+  
+  .bar-right {
+    width: 5px; /* exact width of bg_right.png */
+    height: 31px;
+    background: url('bg_right.png') no-repeat right bottom;
+    flex-shrink: 0;
+    margin: 0; padding: 0;
+  }
+  
+  
+  /* Controls bar sits above the backgrounds */
+  .controls-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    background: none;
+  }
+  
+  .left-controls {
+    display: inline-block;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  
+  .control-button {
+    display: inline-block;
+    vertical-align: middle;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    background: none;
+  }
+  
+  /* Play/Pause Button (not playing) */
+  .pause-btn {
+    width: 30px; 
+    height: 25px;
+    background:
+      url('play_icon.png') no-repeat 60% center,
+      url('play_pause_bg.png') no-repeat 50% 50%;
+    margin-right: -3px;
+  }
+  .pause-btn:hover {
+    background:
+      url('play_icon_hover.png') no-repeat 60% center,
+      url('play_pause_bg.png') no-repeat 50% 50%;
+  }
+  .pause-btn:active {
+    background:
+      url('play_icon_hover.png') no-repeat 60% center,
+      url('play_pause_bg_clicked.png') no-repeat 50% 50%;
+  }
+  
+  /* Play/Pause Button (playing) */
+  .pause-btn.playing {
+    background:
+      url('pause_icon.png') no-repeat 60% center,
+      url('play_pause_bg.png') no-repeat 50% 50%;
+  }
+  .pause-btn.playing:hover {
+    background:
+      url('pause_icon_hover.png') no-repeat 60% center,
+      url('play_pause_bg.png') no-repeat 50% 50%;
+  }
+  .pause-btn.playing:active {
+    background:
+      url('pause_icon_hover.png') no-repeat 60% center,
+      url('play_pause_bg_clicked.png') no-repeat 50% 50%;
+  }
+  
+  /* Rewind Button */
+  .rewind-btn {
+    width: 23px;
+    height: 25px;
+    background:
+      url('rewind.png') no-repeat center center,
+      url('rewind_bg.png') no-repeat center center;
+  }
+  .rewind-btn:hover {
+    background:
+      url('rewind_icon_hover.png') no-repeat center center,
+      url('rewind_bg.png') no-repeat center center;
+  }
+  .rewind-btn:active {
+    background:
+      url('rewind_icon_hover.png') no-repeat center center,
+      url('rewind_bg_clicked.png') no-repeat center center;
+  }
+  
+  /* Timeline */
+  .progress-section {
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    width: 160px;
+    height: 8px;
+    background: none;
+    margin-left: 8px;
+  }
+  
+  .progress-background {
+    width: 100%;
+    height: 8px;
+    background: url('timeline.png') repeat-x left center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .progress-loaded {
+    position: absolute;
+    top: 0;
+    height: 8px;
+    width: 0%;
+    background: url('played_bar_connected.png') repeat-x left center;
+    opacity: 0.6;
+    z-index: 1;
+  }
+  
+  .progress-red {
+    position: absolute;
+    top: 0;
+    height: 8px;
+    width: 0%;
+    background: url('played_bar_connected.png') repeat-x left center;
+    z-index: 2;
+  }
+  
+  .progress-handle {
+    position: absolute;
+    width: 21px; 
+    height: 21px;
+    background: url('timeline_cursor.png') no-repeat center center;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 9999;
+  }
+  .progress-handle.active {
+    background: url('timeline_cursor_red.png') no-repeat center center !important;
+  }
+  
+  /* Time Section */
+  .time-section {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left:8px;
+    margin-right: 0px;
+    font-family: 'OriginalYTFont', Arial, sans-serif;
+  }
+  
+  .time-box {
+    width: 70px;
+    height: 18px;
+    background: url('time_bg.png') no-repeat center center;
+    text-align: center;
+    line-height: 18px;
+    font-size: 10px;
+    color: #fff;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+    margin-left: 0px;
+  }
+  
+  .time-current { color: #fff; }
+  .time-total { color: #C00; }
+  .time-sep { color: #fff; margin: 0 2px; }
+  
+  /* Divider */
+  .divider {
+    width: 2px;
+    height: 31px;
+    background: url('divider.png') no-repeat center center;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  
+  /* Volume Section */
+  .volume-section {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 8px;
+  }
+  
+  .volume-track {
+    position: relative;
+    width: 45px;
+    height: 4px;
+    background: url('volume_slider_bg.png') repeat-x center center;
+    margin-right: 4px;
+  }
+  
+  .volume-level {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: url('volume_level.png') repeat-x center center;
+    pointer-events: none;
+  }
+  
+  .volume-handle {
+    position: absolute;
+    width: 7px;
+    height: 20px;
+    background: url('volume_slider.png') no-repeat center center;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 100%; 
+    cursor: pointer;
+    z-index: 9999;
+  }
+  
+  /* Default volume icon (volume_icon_4.png) */
+  .volume-btn {
+    display: inline-block;
+    vertical-align: middle;
+    width: 20px; 
+    height: 20px;
+    margin-left: 4px;
+    background: url('volume_icon_4.png') no-repeat center center;
+    background-size: contain;
+  }
+  
+  /* Muted class to grey out at 0% volume */
+  .volume-btn.muted {
+    filter: grayscale(100%);
+    opacity: 0.7;
+  }
+  
+  /* Fullscreen Button */
+/* Fullscreen Button */
+.fullscreen-btn {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+    width: 25px; /* Ensure exact size matches your frames (e.g., 20px) */
+    height: 18px;
+    background: url('fullscreen_button/1.png') no-repeat center center;
+    background-size: 25px 18px; /* Match frame size exactly to avoid scaling */
+    image-rendering: auto; /* Let browser smooth it out */
+  }
+  
+  @media (max-width: 400px) {
+    .time-box {
+      display: none;
+    }
+  }
