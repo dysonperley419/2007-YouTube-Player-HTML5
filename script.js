@@ -158,7 +158,7 @@ function updateBuffered() {
 }
 function updateTimeDisplay(currentTime, duration) {
   timeCurrent.textContent = formatTime(currentTime);
-  timeTotal.textContent = duration ? formatTime(duration) : '0:00';
+  timeTotal.textContent = duration ? formatTime(duration) : '00:00';
 }
 
 function formatTime(seconds) {
@@ -317,6 +317,38 @@ function stopVolumeDrag(e) {
 
 volumeHandle.addEventListener('mousedown', startVolumeDrag);
 
+const controlBarHeight = 31; // Adjust if your control bar height differs
+
+function adjustVideoSizeForFullscreen() {
+  const videoArea = document.querySelector('.video-area');
+
+  if (document.fullscreenElement) {
+    // In fullscreen mode, set .video-area to fill the screen except the control bar space
+    videoArea.style.height = `calc(100vh - ${controlBarHeight}px)`;
+    videoArea.style.width = '100%';
+    videoArea.style.display = 'flex';
+    videoArea.style.alignItems = 'center';
+    videoArea.style.justifyContent = 'center';
+
+    // Set the video to fill vertical space
+    myVideo.style.width = 'auto';
+    myVideo.style.height = '100%';
+    myVideo.style.objectFit = 'contain';
+  } else {
+    // In windowed mode, revert to original sizing
+    videoArea.style.height = 'auto';
+    videoArea.style.width = '100%';
+    videoArea.style.display = '';
+    videoArea.style.alignItems = '';
+    videoArea.style.justifyContent = '';
+
+    myVideo.style.width = '99.9%';
+    myVideo.style.height = 'auto';
+    myVideo.style.objectFit = 'contain';
+  }
+}
+
+
 /* Fullscreen Toggle */
 function toggleFullscreen() {
   const container = document.querySelector('.player-container');
@@ -330,6 +362,7 @@ function toggleFullscreen() {
     });
   }
 }
+
 
 
 playPauseBtn.addEventListener('click', togglePlayPause);
@@ -390,22 +423,22 @@ attachFullscreenHoverEvents();
         // Handle fullscreen changes
         document.addEventListener('fullscreenchange', () => {
           if (document.fullscreenElement) {
-            // Entered fullscreen
             stopFullscreenAnimation();
             detachFullscreenHoverEvents();
             fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/exit_fullscreen.png')`;
             fullscreenBtn.style.backgroundSize = '45px 15px';
             fullscreenBtn.classList.add('exit-icon');
           } else {
-            // Exited fullscreen
             fullscreenBtn.classList.remove('exit-icon');
             fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
             fullscreenBtn.style.backgroundSize = '25px 18px';
             attachFullscreenHoverEvents();
           }
         
-          // No artificial waiting needed. The ResizeObserver will call updateProgress()/updateBuffered()
-          // as soon as the layout actually changes the progressSection size.
+          // Adjust video size immediately for fullscreen/windowed
+          adjustVideoSizeForFullscreen();
+          
+          // ResizeObserver will handle updateProgress()/updateBuffered() instantly upon layout changes
         });
 
 
@@ -425,30 +458,29 @@ const observer = new ResizeObserver(() => {
 
 observer.observe(progressSection);
 
-    function handleFullscreenChange() {
-      if (document.fullscreenElement) {
-        // Entered fullscreen
-        stopFullscreenAnimation();
-        detachFullscreenHoverEvents();
-        fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/exit_fullscreen.png')`;
-        fullscreenBtn.style.backgroundSize = '45px 15px';
-        fullscreenBtn.classList.add('exit-icon');
-      } else {
-        // Exited fullscreen
-        fullscreenBtn.classList.remove('exit-icon');
-        fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
-        fullscreenBtn.style.backgroundSize = '25px 18px';
-        attachFullscreenHoverEvents();
-      }
-    
-      // Now we wait for layout to stabilize before updating
-      waitForStableLayout().then(() => {
-        // Once stable, recalculate progress & buffered
-        updateProgress();
-        updateBuffered();
-      });
-    }
-    
+function handleFullscreenChange() {
+  if (document.fullscreenElement) {
+    // Entered fullscreen
+    stopFullscreenAnimation();
+    detachFullscreenHoverEvents();
+    fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/exit_fullscreen.png')`;
+    fullscreenBtn.style.backgroundSize = '45px 15px';
+    fullscreenBtn.classList.add('exit-icon');
+  } else {
+    // Exited fullscreen
+    fullscreenBtn.classList.remove('exit-icon');
+    fullscreenBtn.style.backgroundImage = `url('./assets/fullscreen_button/1.png')`;
+    fullscreenBtn.style.backgroundSize = '25px 18px';
+    attachFullscreenHoverEvents();
+  }
+
+  // Adjust video size based on fullscreen state
+  adjustVideoSizeForFullscreen();
+
+  // If using ResizeObserver to instantly recalc timeline:
+  // The ResizeObserver callback will call updateProgress() and updateBuffered()
+  // as soon as the layout stabilizes. No extra delays needed.
+}
     
 
 function waitForStableLayout() {
