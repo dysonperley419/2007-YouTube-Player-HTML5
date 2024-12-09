@@ -370,7 +370,7 @@ function startVolumeDrag(e) {
   volumeHandle.classList.add('active');
   document.addEventListener('mousemove', dragVolume);
   document.addEventListener('mouseup', stopVolumeDrag);
-  e.preventDefault();
+  e.preventDefault(); 
 }
 
 function dragVolume(e) {
