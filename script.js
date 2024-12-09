@@ -19,6 +19,23 @@ const volumeTrack = document.getElementById('volumeTrack');
 const volumeHandle = document.getElementById('volumeHandle');
 const volumeLevel = document.getElementById('volumeLevel');
 const volumeBtn = document.getElementById('volumeBtn');
+const endedButtons = document.getElementById('endedButtons');
+const shareBtn = document.getElementById('shareBtn');
+const watchAgainBtn = document.getElementById('watchAgainBtn');
+endedButtons.style.display = 'none';
+loadingIndicator.style.zIndex = '99999999999999999999999999';
+loadingIndicator.style.position = 'absolute';
+loadingIndicator.style.top = '50%';
+loadingIndicator.style.left = '50%';
+loadingIndicator.style.transform = 'translate(-50%, -50%)';
+loadingIndicator.style.backgroundRepeat = 'no-repeat';
+loadingIndicator.style.backgroundPosition = 'center';
+loadingIndicator.style.backgroundSize = 'contain';
+loadingIndicator.style.pointerEvents = 'none';
+
+
+myVideo.addEventListener('loadstart', startLoadingAnimation);
+myVideo.addEventListener('loadeddata', stopLoadingAnimation);
 
 myVideo.addEventListener('loadedmetadata', () => {
   videoDuration = myVideo.duration;
@@ -26,6 +43,13 @@ myVideo.addEventListener('loadedmetadata', () => {
   updateBuffered();
   let initialVolPercent = myVideo.volume * 100;
   setVolume(initialVolPercent);
+
+  // Before the video starts playing, hide the video to show just the black background
+  endedButtons.style.display = 'none';
+
+
+    // Autoplay the video as soon as it's ready
+    myVideo.play();
 });
 
 myVideo.addEventListener('timeupdate', () => {
@@ -36,12 +60,50 @@ myVideo.addEventListener('progress', () => {
   updateBuffered();
 });
 
-myVideo.addEventListener('play', () => {
-  playPauseBtn.classList.add('playing');
+myVideo.addEventListener('ended', () => {
+  // When the video ends, hide the video so black background and endedButtons are visible
+  myVideo.style.display = 'none';
+  endedButtons.style.display = 'flex'; // Or 'block', depending on CSS layout
 });
 
+myVideo.addEventListener('play', () => {
+  playPauseBtn.classList.add('playing');
+  endedButtons.style.display = 'none';
+
+  // When the video starts playing for the first time, show it again
+  myVideo.style.display = 'block';
+});
 myVideo.addEventListener('pause', () => {
   playPauseBtn.classList.remove('playing');
+});
+
+
+shareBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href).catch(err => {
+    console.error('Failed to copy URL:', err);
+  });
+});
+
+// Watch Again button: On click, rewind and play the video
+watchAgainBtn.addEventListener('click', () => {
+  // Hide the ended buttons and show the video again
+  endedButtons.style.display = 'none';
+  myVideo.style.display = 'block';
+
+  // Reset earliestWatchedTime so the red bar clears
+  earliestWatchedTime = 0;
+  // Force a reload of the video to discard previously buffered data
+
+// Also reset earliestWatchedTime to clear the red bar visually
+earliestWatchedTime = 0;
+
+  // Reset the video playback
+  myVideo.currentTime = 0;
+  myVideo.play();
+  
+  // Update the timeline after resetting earliestWatchedTime
+  updateProgress();
+  updateBuffered();
 });
 
 let loadingFrame = 1;
@@ -105,6 +167,8 @@ function rewindVideo() {
   updateBuffered();
 }
 
+
+
 function updateProgress() {
   if (!videoDuration) return;
   const currentTime = myVideo.currentTime;
@@ -157,14 +221,21 @@ function updateBuffered() {
   progressLoaded.style.width = loadedFraction + '%';
 }
 function updateTimeDisplay(currentTime, duration) {
-  timeCurrent.textContent = formatTime(currentTime);
-  timeTotal.textContent = duration ? formatTime(duration) : '00:00';
+  // For currentTime, pass a flag to formatTime to zero-pad minutes
+  timeCurrent.textContent = formatTime(currentTime, true);
+  timeTotal.textContent = duration ? formatTime(duration, false) : '0:00';
 }
 
-function formatTime(seconds) {
+function formatTime(seconds, isCurrent) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return m + ':' + (s < 10 ? '0' + s : s);
+
+  // If it's current time (isCurrent = true), zero-pad the minutes if < 10
+  // Otherwise, leave minutes as is for total time
+  const minutesStr = isCurrent ? (m < 10 ? '0' + m : m) : m;
+  const secondsStr = s < 10 ? '0' + s : s;
+
+  return minutesStr + ':' + secondsStr;
 }
 
 function updateBuffered() {
@@ -222,9 +293,15 @@ function stopTimelineDrag(e) {
   const newTime = (x / rect.width) * videoDuration;
 
   earliestWatchedTime = newTime;
-  myVideo.currentTime = newTime;
+  // Clear visually:
+  progressRed.style.width = '0%';
+  progressRed.style.left = earliestWatchedTime + '%';
+  progressLoaded.style.width = '0%';
+  progressLoaded.style.left = earliestWatchedTime + '%';
+  
   updateProgress();
   updateBuffered();
+  
 }
 
 progressHandle.addEventListener('mousedown', startTimelineDrag);
@@ -316,6 +393,15 @@ function stopVolumeDrag(e) {
 }
 
 volumeHandle.addEventListener('mousedown', startVolumeDrag);
+// Clicking anywhere on the volume slider should set the volume to that point
+volumeTrack.addEventListener('click', (e) => {
+  const rect = volumeTrack.getBoundingClientRect();
+  let x = e.clientX - rect.left;
+  const width = rect.width;
+  x = Math.max(0, Math.min(x, width));
+  let volPercent = (x / width) * 100;
+  setVolume(volPercent);
+});
 
 const controlBarHeight = 31; // Adjust if your control bar height differs
 
@@ -524,4 +610,11 @@ function waitForStableLayout() {
     playPauseBtn.addEventListener('click', togglePlayPause);
     rewindBtn.addEventListener('click', rewindVideo);
     fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      myVideo.play().catch(err => {
+        console.error('Autoplay failed:', err);
+      });
+    });
+    
     

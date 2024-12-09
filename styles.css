@@ -17,8 +17,8 @@ body {
 }
 
 .player-container {
-position: relative;
-width: 450;
+  position: relative; /* Ensure positioning context */
+  z-index: 0; /* baseline */
 }
 
 /* In fullscreen, the bottom-bar should also stretch full width */
@@ -64,12 +64,20 @@ width: 100%;
 
 .video-area {
 width: 100%;
-height: auto;
+height: 100%;
+min-width: 480px;
+min-height: 360px;
 flex: 1;
-position: center;
+position: relative;
 display:flex;
 justify-content: center;
 align-items: center;
+z-index: 1;
+background: #000; 
+}
+
+.video-area video {
+  background-color: #000;
 }
 
 .video-area:fullscreen {
@@ -99,7 +107,70 @@ height: 30px; /* match your frame height */
 background: url('assets/loading_frames/1.png') no-repeat center center;
 background-size: 30px 30px; /* exact frame size */
 display: none; /* hidden by default */
+z-index: 100000000000;
 }
+
+.ended-buttons {
+  display: block;
+  position: absolute;
+  top: 20%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 999999; 
+  pointer-events: auto;
+  white-space: nowrap; /* ensures buttons stay on one line */
+}
+
+.ended-buttons button {
+  display: inline-block;
+  border: none;
+  background-color: transparent; 
+  cursor: pointer;
+  vertical-align: middle;
+  margin: 0 -35px;
+  width: 188px;
+  height: 53px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+
+
+video {
+  position: relative;
+  z-index: 1; 
+}
+
+.ended-buttons {
+  z-index: 999999; /* higher than video's z-index */
+}
+
+
+/* Share Button (3 frames: 1.png normal, 2.png hover, 3.png active) */
+.share-btn {
+  background-image: url('assets/share_controls/1.png');
+}
+
+.share-btn:hover {
+  background-image: url('assets/share_controls/2.png');
+}
+
+.share-btn:active {
+  background-image: url('assets/share_controls/3.png');
+}
+
+/* Watch Again Button (2 frames: 1.png normal, 2.png hover/active) */
+.watch-again-btn {
+  background-image: url('assets/play_again_controls/1.png');
+}
+
+.watch-again-btn:hover,
+.watch-again-btn:active {
+  background-image: url('assets/play_again_controls/2.png');
+}
+
 
 /* Bottom bar setup */
 .bottom-bar {
