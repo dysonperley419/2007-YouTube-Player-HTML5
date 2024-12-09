@@ -4,8 +4,10 @@ A Faithful HTML5 Recreation of the YouTube Flash Player from their 2007 website.
 Try it out here:
 https://erickrouss.github.io/2007-YouTube-Player-HTML5/
 
-To do:
+To-do:
+-Fix buffer animation
+-Add old "Loading..." before video populates
+(hardest part about both of these is having high speed internet. It's hard to test even with network throttling)
 
--Fix Fullscreen layout
-
--Add Replay/Share buttons
+Wishlist:
+-Add tag support to determine if it's an auto-play 
