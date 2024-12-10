@@ -1,5 +1,5 @@
 A Faithful HTML5 Recreation of the YouTube Flash Player from their 2007 website.
-![image](https://github.com/user-attachments/assets/4d83abb0-92e8-475a-a0b4-6ce538cb926c)
+![image](https://github.com/user-attachments/assets/1b7fcc03-7745-48d9-9a3f-2effac266081)
 
 Try it out here:
 https://erickrouss.github.io/2007-YouTube-Player-HTML5/
